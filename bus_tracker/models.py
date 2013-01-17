@@ -3,8 +3,6 @@ from django.contrib import admin
 
 class BusRoute(models.Model):
 	number = models.IntegerField()
-	def __unicode__(self):
-		return self.number
 
 class BusStop(models.Model):
 	phone_number = models.IntegerField()
