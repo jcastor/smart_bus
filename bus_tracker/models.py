@@ -5,16 +5,16 @@ class BusRoute(models.Model):
 	number = models.IntegerField()
 
 class BusStop(models.Model):
-	phone_number = models.IntegerField()
+	phone_number = models.CharField(max_length=30)
 	stop_name = models.CharField(max_length=100)
 	routes = models.ManyToManyField('BusRoute')
-	lon = models.DecimalField(max_digits=8, decimal_places=6)
-	lat = models.DecimalField(max_digits=8, decimal_places=6)
+	lon = models.DecimalField(max_digits=20, decimal_places=6)
+	lat = models.DecimalField(max_digits=20, decimal_places=6)
 	def __unicode__(self):
 		return self.stop_name
 
 class Bus(models.Model):
-	phone_number = models.IntegerField()
+	phone_number = models.CharField(max_length=30)
 	id_number = models.CharField(max_length=60)
 	bus_route = models.ForeignKey('BusRoute')
 	bus_stops = models.ManyToManyField('BusStop')
@@ -23,18 +23,17 @@ class Bus(models.Model):
 
 class BusLocation(models.Model):
 	bus = models.OneToOneField('Bus')
-	lon = models.DecimalField(max_digits=8, decimal_places=6)
-	lat = models.DecimalField(max_digits=8, decimal_places=6)	
+	lon = models.DecimalField(max_digits=20, decimal_places=6)
+	lat = models.DecimalField(max_digits=20, decimal_places=6)
 	time = models.DateTimeField(auto_now_add=True)
 	def __unicode__(self):
-		location = lon + " " + lat
-		return self.location
+		return self.bus.phone_number
 
 class Light(models.Model):
 	id_num = models.IntegerField()
 	route = models.ForeignKey('BusRoute')
-	lon = models.DecimalField(max_digits=8, decimal_places=6)
-	lat = models.DecimalField(max_digits=8, decimal_places=6)
+	lon = models.DecimalField(max_digits=20, decimal_places=6)
+	lat = models.DecimalField(max_digits=20, decimal_places=6)
 	def __unicode__(self):
 		return self.id_num
 

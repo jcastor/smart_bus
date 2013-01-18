@@ -1,0 +1,22 @@
+{% extends "bus_tracker/base.html" %}
+
+{% block content %}
+<h3>BusRoute - {{busroute.number}}</h3>
+<table class="table table-striped">
+	<thead>
+	<tr>
+		<th>Bus Stops</th>
+	</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>{% for stop in busroute.busstop_set.all %}
+                                <li><a href="">{{stop.stop_name}}</a></li>
+                        {%endfor%}</td>
+		</tr>
+	</tbody>
+</table>
+Current Location Long:{{ busroute.bus_set.all.0.buslocation.lon }} Lat: {{ busroute.bus_set.all.0.buslocation.lat }}<br/>
+Time:  {{busroute.bus_set.all.0.buslocation.time}}
+
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "bus_tracker/base.html" %}
+
+{% block content %}
+<table class="table table-striped">
+	<thead>
+	<tr>
+		<th>Bus Routes</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for route in busroute_list %}
+		<tr>
+			<td><a href="{% url busroute_list_detail_view route.id %}">{{route.number}}</a></td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+{% endblock %}
