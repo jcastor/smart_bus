@@ -2,21 +2,34 @@
 
 {% block content %}
 <h3>BusRoute - {{busroute.number}}</h3>
+
+{% for stop in busroute.busstop_set.all %}
 <table class="table table-striped">
 	<thead>
 	<tr>
-		<th>Bus Stops</th>
+			<th> {{stop.stop_name}} </th>
 	</tr>
 	</thead>
-	<tbody>
-		<tr>
-			<td>{% for stop in busroute.busstop_set.all %}
-                                <li><a href="">{{stop.stop_name}}</a></li>
-                        {%endfor%}</td>
-		</tr>
+	<tbody> 
+	{% for stoptime in stop.arrivaltime_set.all|dictsort:"time" %} 
+			<tr>
+				<td>{{stoptime.time}} </td>
+			</tr>
+		{% endfor %}
 	</tbody>
 </table>
+{% endfor %}
+
 Current Location Long:{{ busroute.bus_set.all.0.buslocation.lon }} Lat: {{ busroute.bus_set.all.0.buslocation.lat }}<br/>
 Time:  {{busroute.bus_set.all.0.buslocation.time}}
+
+{{form.map}}
+{{form.media.js}}
+<script type="text/javascript">
+    window.myobj = {
+        markerOver: function() { this.openInfoWindow(); },
+        markerOut: function() { this.closeInfoWindow(); }
+    };
+</script>
 
 {% endblock %}

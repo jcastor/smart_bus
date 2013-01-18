@@ -7,5 +7,5 @@ urlpatterns = patterns('bus_tracker.views',
 	url(r'^$', TemplateView.as_view(template_name="bus_tracker/default.html"), name="main"),
 	url(r'^sms/$', 'sms'),
 	url(r'^routes/', ListView.as_view(model=BusRoute, context_object_name="busroute_list",), name="busroute_list"),
-	url(r'^route/(?P<pk>\d+)/$', DetailView.as_view(model=BusRoute), name="busroute_list_detail_view"),
+	url(r'^route/(?P<pk>\d+)/$', 'displayroute', name="displayroute"),
 )

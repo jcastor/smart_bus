@@ -13,6 +13,11 @@ class BusStop(models.Model):
 	def __unicode__(self):
 		return self.stop_name
 
+class ArrivalTime(models.Model):
+	route = models.ForeignKey('BusRoute')
+	stop = models.ForeignKey('BusStop')
+	time = models.TimeField()
+
 class Bus(models.Model):
 	phone_number = models.CharField(max_length=30)
 	id_number = models.CharField(max_length=60)
@@ -51,3 +56,6 @@ class BusLocationAdmin(admin.ModelAdmin):
 
 class LightAdmin(admin.ModelAdmin):	
 	search_fields = ["id_num"]
+
+class ArrivalTimeAdmin(admin.ModelAdmin):
+	search_fields = ["route"]

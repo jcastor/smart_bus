@@ -10,7 +10,7 @@
 	<tbody>
 	{% for route in busroute_list %}
 		<tr>
-			<td><a href="{% url busroute_list_detail_view route.id %}">{{route.number}}</a></td>
+			<td><a href="{% url displayroute route.id %}">{{route.number}}</a></td>
 		</tr>
 	{% endfor %}
 	</tbody>
