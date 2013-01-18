@@ -3,33 +3,48 @@
 {% block content %}
 <h3>BusRoute - {{busroute.number}}</h3>
 
-{% for stop in busroute.busstop_set.all %}
-<table class="table table-striped">
-	<thead>
-	<tr>
-			<th> {{stop.stop_name}} </th>
-	</tr>
-	</thead>
-	<tbody> 
-	{% for stoptime in stop.arrivaltime_set.all|dictsort:"time" %} 
-			<tr>
-				<td>{{stoptime.time}} </td>
-			</tr>
+
+
+
+<div class="container">
+	<div class="row">
+		{% for stop in busroute.busstop_set.all %}
+			<div class="span3">
+				<table class="table table-striped">
+				<thead>
+					<tr>
+						<th> {{stop.stop_name}} </th>
+					</tr>
+				</thead>
+				<tbody> 
+				{% for stoptime in stop.arrivaltime_set.all|dictsort:"time" %} 
+					<tr>
+						<td>{{stoptime.time}} </td>
+					</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+			</div>
 		{% endfor %}
-	</tbody>
-</table>
-{% endfor %}
-
-Current Location Long:{{ busroute.bus_set.all.0.buslocation.lon }} Lat: {{ busroute.bus_set.all.0.buslocation.lat }}<br/>
-Time:  {{busroute.bus_set.all.0.buslocation.time}}
-
-{{form.map}}
-{{form.media.js}}
+	</div>
+</div>
+<div class="container">
+	<div class="row">
+		<div class="span3">
+		</div>
+		<div class="span3">
+			{{form.map}}
+		</div>
+		<div class="span3">
+		</div>
+		
+	</div>
+</div>
 <script type="text/javascript">
     window.myobj = {
         markerOver: function() { this.openInfoWindow(); },
         markerOut: function() { this.closeInfoWindow(); }
     };
 </script>
-
+{{form.media.js}}
 {% endblock %}
