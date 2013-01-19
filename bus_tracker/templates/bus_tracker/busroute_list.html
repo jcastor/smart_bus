@@ -5,12 +5,15 @@
 	<thead>
 	<tr>
 		<th>Bus Routes</th>
+		<th>Route Directions</th>
 	</tr>
 	</thead>
 	<tbody>
 	{% for route in busroute_list %}
+	{% regroup route.arrivaltime_set.all by direction as direction_list %}
 		<tr>
 			<td><a href="{% url displayroute route.id %}">{{route.number}}</a></td>
+			<td>{% for direction in direction_list %} {{direction.grouper}} / {% endfor %}</td>
 		</tr>
 	{% endfor %}
 	</tbody>

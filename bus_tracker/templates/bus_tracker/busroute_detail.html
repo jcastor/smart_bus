@@ -9,17 +9,17 @@
 <div class="container">
 	<div class="row">
 		{% for stop in busroute.busstop_set.all %}
-			<div class="span3">
+			<div class="span2">
 				<table class="table table-striped">
 				<thead>
 					<tr>
-						<th> {{stop.stop_name}} </th>
+						<th><small> {{stop.stop_name}} </small></th>
 					</tr>
 				</thead>
 				<tbody> 
 				{% for stoptime in stop.arrivaltime_set.all|dictsort:"time" %} 
 					<tr>
-						<td>{{stoptime.time}} </td>
+						<td><small>{{stoptime.time}}</small> </td>
 					</tr>
 				{% endfor %}
 				</tbody>

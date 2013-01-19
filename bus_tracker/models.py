@@ -3,6 +3,8 @@ from django.contrib import admin
 
 class BusRoute(models.Model):
 	number = models.IntegerField()
+	def __unicode__(self):
+		return unicode(self.number)
 
 class BusStop(models.Model):
 	phone_number = models.CharField(max_length=30)
@@ -13,10 +15,18 @@ class BusStop(models.Model):
 	def __unicode__(self):
 		return self.stop_name
 
+class Direction(models.Model):
+	name = models.CharField(max_length=30)
+	def __unicode__(self):
+		return self.name
+
 class ArrivalTime(models.Model):
 	route = models.ForeignKey('BusRoute')
 	stop = models.ForeignKey('BusStop')
 	time = models.TimeField()
+	direction = models.ForeignKey('Direction')
+	def __unicode__(self):
+		return unicode("Route: " + str(self.route.number) + " stop: " + str(self.stop.stop_name) + " time: " + str(self.time))
 
 class Bus(models.Model):
 	phone_number = models.CharField(max_length=30)
@@ -30,7 +40,7 @@ class BusLocation(models.Model):
 	bus = models.OneToOneField('Bus')
 	lon = models.DecimalField(max_digits=20, decimal_places=6)
 	lat = models.DecimalField(max_digits=20, decimal_places=6)
-	time = models.DateTimeField(auto_now_add=True)
+	time = models.DateTimeField(auto_now=True)
 	def __unicode__(self):
 		return self.bus.phone_number
 
@@ -59,3 +69,6 @@ class LightAdmin(admin.ModelAdmin):
 
 class ArrivalTimeAdmin(admin.ModelAdmin):
 	search_fields = ["route"]
+
+class DirectionAdmin(admin.ModelAdmin):
+	search_fields = ["name"]
