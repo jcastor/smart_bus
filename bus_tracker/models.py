@@ -2,31 +2,34 @@ from django.db import models
 from django.contrib import admin
 
 class BusRoute(models.Model):
-	number = models.IntegerField()
+	route_id = models.CharField(max_length=200)
+	route_short_name = models.CharField(max_length=200)
 	def __unicode__(self):
-		return unicode(self.number)
-
-class BusStop(models.Model):
-	phone_number = models.CharField(max_length=30)
-	stop_name = models.CharField(max_length=100)
-	routes = models.ManyToManyField('BusRoute')
-	lon = models.DecimalField(max_digits=20, decimal_places=6)
-	lat = models.DecimalField(max_digits=20, decimal_places=6)
-	def __unicode__(self):
-		return self.stop_name
+		return unicode(self.route_short_name)
 
 class Direction(models.Model):
 	name = models.CharField(max_length=30)
 	def __unicode__(self):
 		return self.name
 
+
+class BusStop(models.Model):
+	phone_number = models.CharField(max_length=30)
+	stop_name = models.CharField(max_length=100, unique=True)
+	routes = models.ManyToManyField('BusRoute')
+	lon = models.DecimalField(max_digits=20, decimal_places=6)
+	lat = models.DecimalField(max_digits=20, decimal_places=6)
+	direction = models.ForeignKey('Direction')
+	def __unicode__(self):
+		return self.stop_name
+
+
 class ArrivalTime(models.Model):
 	route = models.ForeignKey('BusRoute')
 	stop = models.ForeignKey('BusStop')
 	time = models.TimeField()
-	direction = models.ForeignKey('Direction')
 	def __unicode__(self):
-		return unicode("Route: " + str(self.route.number) + " stop: " + str(self.stop.stop_name) + " time: " + str(self.time))
+		return unicode("Route: " + str(self.route.route_short_name) + " stop: " + str(self.stop.stop_name) + " time: " + str(self.time))
 
 class Bus(models.Model):
 	phone_number = models.CharField(max_length=30)

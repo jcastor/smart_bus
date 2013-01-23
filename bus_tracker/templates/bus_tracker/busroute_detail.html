@@ -1,14 +1,20 @@
 {% extends "bus_tracker/base.html" %}
 
 {% block content %}
-<h3>BusRoute - {{busroute.number}}</h3>
+<h3>BusRoute - {{busroute.route_short_name}}</h3>
+{% regroup busroute.busstop_set.all by direction as direction_list %}
+<div class="container">
+	<div class="row">
+		<div class="span6"><strong>Direction: </strong>{% for direction in direction_list %}<a href="{% url displayroute_direction busroute.id direction.grouper%}"> {{direction.grouper}} </a>/ {%endfor%}
+		</div>
+		
+	</div>
 
-
-
+</div>
 
 <div class="container">
 	<div class="row">
-		{% for stop in busroute.busstop_set.all %}
+		{% for stop in stops %}
 			<div class="span2">
 				<table class="table table-striped">
 				<thead>
@@ -17,9 +23,31 @@
 					</tr>
 				</thead>
 				<tbody> 
-				{% for stoptime in stop.arrivaltime_set.all|dictsort:"time" %} 
+				{% for stoptime in busroute.arrivaltime_set.all|dictsort:"time" %}
 					<tr>
+						{% if stoptime.time in times %}
 						<td><small>{{stoptime.time}}</small> </td>
+						{% endif %}
+					</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+			</div>
+		{% endfor %}
+		{% for stop in nonestops %}
+			<div class="span2">
+				<table class="table table-striped">
+				<thead>
+					<tr>
+						<th><small> {{stop.stop_name}} </small></th>
+					</tr>
+				</thead>
+				<tbody> 
+				{% for stoptime in busroute.arrivaltime_set.all|dictsort:"time" %}
+					<tr>
+						{% if stoptime.time in times %}
+						<td><small>{{stoptime.time}}</small> </td>
+						{% endif %}
 					</tr>
 				{% endfor %}
 				</tbody>
