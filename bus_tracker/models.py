@@ -35,7 +35,6 @@ class Bus(models.Model):
 	phone_number = models.CharField(max_length=30)
 	id_number = models.CharField(max_length=60)
 	bus_route = models.ForeignKey('BusRoute')
-	bus_stops = models.ManyToManyField('BusStop')
 	def __unicode__(self):
 		return self.id_number
 

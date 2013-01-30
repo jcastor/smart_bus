@@ -7,7 +7,7 @@ from bus_tracker.models import BusStop, BusRoute, BusLocation, Bus, ArrivalTime,
 from django import forms
 from gmapi import maps
 from gmapi.forms.widgets import GoogleMap
-
+from django_twilio.client import twilio_client
 
 def sms(request):
 	textmessage = request.GET.get('Body', '')
@@ -19,6 +19,11 @@ def sms(request):
 		updatelocation = BusLocation.objects.get(bus=bus)
 		updatelocation.lat = splitmessage[0]
 		updatelocation.lon = splitmessage[1]
+		messagetostops = splitmessage[0]+";"+splitmessage[1]
+		stops = BusStop.objects.filter(routes=bus.bus_route)
+#		twilio_client.sms.messages.create(to="+12502086479", from_="+12509842369", body=messagetostops)
+		for stop in stops:
+			twilio_client.sms.messages.create(to=stop.phone_number, from_="+12509842369", body=messagetostops)
 		updatelocation.save()
 
 	return render_to_response("bus_tracker/default.html", RequestContext(request))
