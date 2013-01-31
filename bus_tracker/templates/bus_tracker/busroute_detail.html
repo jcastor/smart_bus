@@ -23,7 +23,7 @@
 					</tr>
 				</thead>
 				<tbody> 
-				{% for stoptime in busroute.arrivaltime_set.all|dictsort:"time" %}
+				{% for stoptime in stop.arrivaltime_set.all|dictsort:"time" %}
 					<tr>
 						{% if stoptime.time in times %}
 						<td><small>{{stoptime.time}}</small> </td>
