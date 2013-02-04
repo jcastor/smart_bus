@@ -8,7 +8,9 @@ from django import forms
 from gmapi import maps
 from gmapi.forms.widgets import GoogleMap
 from django_twilio.client import twilio_client
-
+from bus_tracker.serializers import BusLocationSerializer
+from rest_framework import generics
+from rest_framework.response import Response
 def sms(request):
 	textmessage = request.GET.get('Body', '')
 	sender = request.GET.get('From', '')
@@ -83,4 +85,12 @@ def displayroute(request, pk, direction="East"):
 
 	context = {'form': MapForm(initial={'map':gmap}), 'busroute': route, 'nonestops': nonestops, 'times': times, 'stops': stops}
 	return render_to_response("bus_tracker/busroute_detail.html", context, RequestContext(request))
-	
+
+class BusLocationDetail(generics.RetrieveAPIView):
+	model = BusLocation
+	serializer_class = BusLocationSerializer
+	def get(self, request, bus, format=None):
+		ourbus = Bus.objects.get(id_number=bus)
+		buslocation = BusLocation.objects.get(bus=ourbus)
+		serializer = BusLocationSerializer(buslocation)
+		return Response(serializer.data)
