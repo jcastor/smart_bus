@@ -3,14 +3,15 @@ from django.template import RequestContext
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views.decorators.cache import cache_page
 from django.db.models import Q
-from bus_tracker.models import BusStop, BusRoute, BusLocation, Bus, ArrivalTime, Direction
+from bus_tracker.models import Light, BusStop, BusRoute, BusLocation, Bus, ArrivalTime, Direction
 from django import forms
 from gmapi import maps
 from gmapi.forms.widgets import GoogleMap
 from django_twilio.client import twilio_client
-from bus_tracker.serializers import BusLocationSerializer
+from bus_tracker.serializers import LightSerializer, BusLocationSerializer, BusStopSerializer
 from rest_framework import generics
 from rest_framework.response import Response
+import math
 def sms(request):
 	textmessage = request.GET.get('Body', '')
 	sender = request.GET.get('From', '')
@@ -94,3 +95,61 @@ class BusLocationDetail(generics.RetrieveAPIView):
 		buslocation = BusLocation.objects.get(bus=ourbus)
 		serializer = BusLocationSerializer(buslocation)
 		return Response(serializer.data)
+
+
+class BusStopDetail(generics.RetrieveAPIView):
+	model = BusStop
+	serializer_class = BusStopSerializer
+	def get(self, request, route, format=None):
+		our_route = BusRoute.objects.get(route_short_name=route)
+		bus_stops = BusStop.objects.filter(routes=our_route)
+		serializer = BusStopSerializer(bus_stops)
+		return Response(serializer.data)
+
+class LightDetail(generics.RetrieveAPIView):
+	model = Light
+	serializer_class = BusStopSerializer
+	def get(self, request, route, bus, format=None):
+		our_bus = Bus.objects.get(id_number=bus)
+		bus_location = BusLocation.objects.get(bus=our_bus)
+		our_route = BusRoute.objects.get(route_short_name=route)
+		bus_stops = BusStop.objects.filter(routes=our_route)
+		current_distance = 10000
+		for stop in bus_stops:
+			distance = distance_on_unit_sphere(bus_location.lat, bus_location.lon, stop.lat, stop.lon)
+			if distance < current_distance:
+				current_distance = distance
+				closest_stop = stop
+		bus_light = Light.objects.get(stop = closest_stop)
+		serializer = LightSerializer(bus_light)
+		return Response(serializer.data)
+
+
+def distance_on_unit_sphere(lat1, long1, lat2, long2):
+
+	# Convert latitude and longitude to 
+	# spherical coordinates in radians.
+	degrees_to_radians = math.pi/180.0
+    
+	# phi = 90 - latitude
+	phi1 = (90.0 - float(lat1))*degrees_to_radians
+	phi2 = (90.0 - float(lat2))*degrees_to_radians
+      
+	# theta = longitude
+	theta1 = float(long1)*degrees_to_radians
+	theta2 = float(long2)*degrees_to_radians
+        
+	# Compute spherical distance from spherical coordinates.
+      
+	# For two locations in spherical coordinates 
+	# (1, theta, phi) and (1, theta, phi)
+	# cosine( arc length ) = 
+	#    sin phi sin phi' cos(theta-theta') + cos phi cos phi'
+	# distance = rho * arc length
+    
+	cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) + math.cos(phi1)*math.cos(phi2))
+	arc = math.acos( cos )
+
+	# Remember to multiply arc by the radius of the earth 
+	# in your favorite set of units to get length.
+	return arc

@@ -49,10 +49,9 @@ class BusLocation(models.Model):
 class Light(models.Model):
 	id_num = models.IntegerField()
 	route = models.ForeignKey('BusRoute')
-	lon = models.DecimalField(max_digits=20, decimal_places=6)
-	lat = models.DecimalField(max_digits=20, decimal_places=6)
+	stop = models.ForeignKey('BusStop')
 	def __unicode__(self):
-		return self.id_num
+		return str(self.id_num)
 
 
 class BusRouteAdmin(admin.ModelAdmin):

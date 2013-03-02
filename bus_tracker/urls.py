@@ -10,6 +10,8 @@ urlpatterns = patterns('bus_tracker.views',
 	url(r'^routes/', ListView.as_view(model=BusRoute, context_object_name="busroute_list",), name="busroute_list"),
 	url(r'^route/(?P<pk>\d+)/$', 'displayroute', name="displayroute"),
 	url(r'^route/(?P<pk>\d+)/(?P<direction>\w+)/$', 'displayroute', name="displayroute_direction"),
-	url(r'^rest/(?P<bus>\w+)/$', views.BusLocationDetail.as_view()),
+	url(r'^rest/buslocation/(?P<bus>\w+)/$', views.BusLocationDetail.as_view()),
+	url(r'^rest/stops/(?P<route>\w+)/$', views.BusStopDetail.as_view()),
+	url(r'^rest/lights/(?P<route>\w+)/(?P<bus>\w+)/$', views.LightDetail.as_view()),
 
 )
