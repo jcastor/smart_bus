@@ -25,29 +25,7 @@
 				<tbody> 
 				{% for stoptime in stop.arrivaltime_set.all|dictsort:"time" %}
 					<tr>
-						{% if stoptime.time in times %}
 						<td><small>{{stoptime.time}}</small> </td>
-						{% endif %}
-					</tr>
-				{% endfor %}
-				</tbody>
-				</table>
-			</div>
-		{% endfor %}
-		{% for stop in nonestops %}
-			<div class="span2">
-				<table class="table table-striped">
-				<thead>
-					<tr>
-						<th><small> {{stop.stop_name}} </small></th>
-					</tr>
-				</thead>
-				<tbody> 
-				{% for stoptime in busroute.arrivaltime_set.all|dictsort:"time" %}
-					<tr>
-						{% if stoptime.time in times %}
-						<td><small>{{stoptime.time}}</small> </td>
-						{% endif %}
 					</tr>
 				{% endfor %}
 				</tbody>
