@@ -9,4 +9,6 @@ urlpatterns = patterns('gtfs_bus.views',
 	url(r'^update/$', 'update_location'),
 	url(r'^routes/', ListView.as_view(model=Route, context_object_name="route_list",), name="route_list"),
 	url(r'^rest/buslocations/(?P<route>\w+)/$', views.BusDetail.as_view()),
+	url(r'^rest/schedule/(?P<route>\w+)/$', views.ScheduleDetail.as_view()),
+	url(r'^rest/lights/(?P<route>\w+)/$', views.LightDetail.as_view()),
 )
