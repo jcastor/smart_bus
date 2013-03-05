@@ -23,7 +23,7 @@ for row in cr2:
 		time.stop = stop
 		time_arrive = row[1]
 		time.stop_sequence = row[4]
-		if time_arrive.startswish("24"):
+		if time_arrive.startswith("24"):
 			time_arrive = list(time_arrive)
 			time_arrive[0] = '0'
 			time_arrive[1] = '0'
@@ -38,6 +38,6 @@ for row in cr2:
 		time.departure_time = time_depart
 		time.save()
 		print time
-	except:
-		pass
+	except Exception as e:
+		print e
 
