@@ -1,0 +1,56 @@
+{% extends "gtfs_bus/base.html" %}
+
+{% block content %}
+<h3>BusRoute - {{busroute.route_short_name}}</h3>
+{% regroup busroute.busstop_set.all by direction as direction_list %}
+<div class="container">
+	<div class="row">
+		<div class="span6"><strong>Direction: </strong>{% for direction in direction_list %}<a href="{% url displayroute_direction busroute.id direction.grouper%}"> {{direction.grouper}} </a>/ {%endfor%}
+		</div>
+		
+	</div>
+
+</div>
+
+<div class="container">
+	<div class="row">
+		{% for stop in stops %}
+			<div class="span2">
+				<table class="table table-striped">
+				<thead>
+					<tr>
+						<th><small> {{stop.stop_name}} </small></th>
+					</tr>
+				</thead>
+				<tbody> 
+				{% for stoptime in stop.arrivaltime_set.all|dictsort:"time" %}
+					<tr>
+						<td><small>{{stoptime.time}}</small> </td>
+					</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+			</div>
+		{% endfor %}
+	</div>
+</div>
+<div class="container">
+	<div class="row">
+		<div class="span3">
+		</div>
+		<div class="span3">
+			{{form.map}}
+		</div>
+		<div class="span3">
+		</div>
+		
+	</div>
+</div>
+<script type="text/javascript">
+    window.myobj = {
+        markerOver: function() { this.openInfoWindow(); },
+        markerOut: function() { this.closeInfoWindow(); }
+    };
+</script>
+{{form.media.js}}
+{% endblock %}

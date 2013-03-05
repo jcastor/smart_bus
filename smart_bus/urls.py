@@ -15,5 +15,6 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
 	url(r'^sbs/', include('bus_tracker.urls')),
+	url(r'^gtfs/', include('gtfs_bus.urls')),
 
 )
