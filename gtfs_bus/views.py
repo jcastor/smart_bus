@@ -6,6 +6,8 @@ from django.db.models import Q
 from gtfs_bus.models import *
 from gtfs_bus.serializers import *
 from django import forms
+from time import time
+from datetime import datetime
 from gmapi import maps
 from gmapi.forms.widgets import GoogleMap
 from django_twilio.client import twilio_client
@@ -35,8 +37,53 @@ class MapForm(forms.Form):
 	map = forms.Field(widget=GoogleMap(attrs={'width':510, 'height':510}))
 
 def display_route(request, pk, dow="Weekday"):
-	route = Route.objects.get(id=pk)
-	trips = Trip.objects.filter(route=route, day=dow)
+	direction = request.GET.get('dir', '')
+	route = Route.objects.get(route_shortname=pk)
+	if direction:
+		trips = Trip.objects.filter(route=route, day=dow, headsign = direction)
+	else:
+		trips = Trip.objects.filter(route=route, day=dow)
+	busses = Bus.objects.filter(trip__in = trips)
+	stops = Stops.objects.filter(~Q(light_num=0))
+	stop_times = StopTimes.objects.filter(trip__in = trips, stop__in = stops).order_by('trip', 'stop_sequence')
+	try:
+		gmap = maps.Map(opts = {
+			'center': maps.LatLng(busses[0].lat, busses[0].lon),
+			'mapTypeId': maps.MapTypeId.ROADMAP,
+			'zoom': 13,
+			'mapTypeControlOptions': {
+				'style': maps.MapTypeControlStyle.DROPDOWN_MENU
+			},
+		})
+	except:
+		gmap = maps.Map(opts = {
+			'center': maps.LatLng(stops[0].lat, stops[0].lon),
+			'mapTypeId': maps.MapTypeId.ROADMAP,
+			'zoom': 13,
+			'mapTypeControlOptions': {
+				'style': maps.MapTypeControlStyle.DROPDOWN_MENU
+			},
+		})
+		
+	for stoptime in stop_times:
+		marker = maps.Marker(opts = {
+			'map': gmap,
+			'position': maps.LatLng(stoptime.stop.lat, stoptime.stop.lon),
+		})
+	for bus in busses:
+		marker2 = maps.Marker(opts = {
+			'map': gmap,
+			'position': maps.LatLng(bus.lat, bus.lon),
+		})
+		maps.event.addListener(marker2, 'mouseover', 'myobj.markerOver')
+		maps.event.addListener(marker2, 'mouseout', 'myobj.markerOut')
+		info = maps.InfoWindow({
+			'content': 'TripID: ' + str(bus.trip.trip_id),
+			'disableAutoPan': True
+		})
+		info.open(gmap, marker2)
+	context = {'trips': trips, 'stops': stops, 'form': MapForm(initial={'map':gmap}), 'busroute':route, 'stop_times':stop_times}
+	return render_to_response("gtfs_bus/route_detail.html", context, RequestContext(request))
 
 	
 #API Calls
@@ -64,6 +111,32 @@ class ScheduleDetail(generics.RetrieveAPIView):
 		stop_times = StopTimes.objects.filter(trip__in = our_trips).order_by('trip', 'stop_sequence')
 		serializer = StopTimesSerializer(stop_times)
 		return Response(serializer.data)
+
+class NextStopTime(generics.RetrieveAPIView):
+	model = StopTimes
+	serializer_class = StopTimesSerializer
+	def get(self, request, trip_id, stop_id, format=None):
+		our_trip = Trip.objects.get(trip_id=trip_id)
+		stop_times = StopTimes.objects.filter(trip = our_trip)
+		hour = datetime.now().hour
+		next_stop = stop_times[0]
+		minutes = datetime.now().minute
+		h_curr = 23
+		m_curr = 59
+		for stop in stop_times:
+			arrival_time = str(stop.arrival_time)
+			split_time = arrival_time.split(':')
+			h_diff = int(split_time[0]) - int(hour)
+			m_diff = int(split_time[1]) - int(minutes)
+			if h_diff > -1 and m_diff > -1:
+				if h_diff < h_curr:
+					if m_diff < m_curr:
+						m_curr = m_diff
+						h_curr = h_diff
+						next_stop = stop
+		serializer = StopTimesSerializer(next_stop)
+		return Response(serializer.data)
+
 
 class LightDetail(generics.RetrieveAPIView):
 	model = Stops

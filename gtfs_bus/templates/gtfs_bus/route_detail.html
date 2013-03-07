@@ -1,7 +1,7 @@
 {% extends "gtfs_bus/base.html" %}
 
 {% block content %}
-<h3>BusRoute - {{busroute.route_short_name}}</h3>
+<h3>BusRoute - {{busroute.route_shortname}}</h3>
 {% regroup busroute.busstop_set.all by direction as direction_list %}
 <div class="container">
 	<div class="row">
@@ -11,28 +11,65 @@
 	</div>
 
 </div>
-
+{% regroup stop_times by stop as unique_stops %}
+{% regroup stop_times by trip as unique_trips %}
 <div class="container">
-	<div class="row">
-		{% for stop in stops %}
-			<div class="span2">
+<!--	<div class="row">
+			<div class="span12">
 				<table class="table table-striped">
 				<thead>
 					<tr>
-						<th><small> {{stop.stop_name}} </small></th>
+						<th><small> Trip ID</small></th>
+						{% for stop in stop_times %}
+							{% if unique_trips.0.grouper == stop.trip %}
+							<th><small>{{stop.stop}}</small></th>
+							{% endif %}
+						{% endfor %}
 					</tr>
 				</thead>
-				<tbody> 
-				{% for stoptime in stop.arrivaltime_set.all|dictsort:"time" %}
+				<tbody>
+				{% for trip in unique_trips %} 
 					<tr>
-						<td><small>{{stoptime.time}}</small> </td>
+						<td><small>{{trip.grouper}}</small> </td>
+						{% for times in stop_times %}
+							{% if trip.grouper == times.trip %}
+								<td><small>{{times.arrival_time}} - {{times.trip}} - {{times.stop}}</small></td>
+							{% endif %}
+						{% endfor %}
 					</tr>
 				{% endfor %}
 				</tbody>
 				</table>
 			</div>
-		{% endfor %}
+	</div>-->
+	{% for trip in unique_trips %}
+	<div class="row">
+			<div class="span12">
+				<table class="table table-striped">
+				<thead>
+					<tr>
+						<th><small> Trip ID</small></th>
+						{% for stop in stop_times %}
+							{% if trip.grouper == stop.trip %}
+								<th><small>{{stop.stop}}</small></th>
+							{% endif %}
+						{% endfor %}
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><small>{{trip.grouper}}</small> </td>
+						{% for times in stop_times %}
+							{% if trip.grouper == times.trip %}
+								<td><small>{{times.arrival_time}}</small></td>
+							{% endif %}
+						{% endfor %}
+					</tr>
+				</tbody>
+				</table>
+			</div>
 	</div>
+	{% endfor %}
 </div>
 <div class="container">
 	<div class="row">
