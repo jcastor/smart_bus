@@ -12,8 +12,42 @@
 
 </div>
 {% regroup stop_times by stop as unique_stops %}
+{% regroup stop_times_stop by stop as uniq_stops %}
 {% regroup stop_times by trip as unique_trips %}
 <div class="container">
+<!--	<div class="row">
+			<div class="span12">
+				<table class="table table-striped">
+				<thead>
+					<tr>
+						<th><small> Trip ID</small></th>
+						{% for stop in stop_times %}
+							{% if unique_trips.0.grouper == stop.trip %}
+							<th><small>{{stop.stop}}</small></th>
+							{% endif %}
+						{% endfor %}
+					</tr>
+				</thead>
+				<tbody>
+				{% for trip in unique_trips %} 
+					<tr>
+						<td><small>{{trip.grouper}}
+						</small> </td>
+						{% for times in trip.grouper.stoptimes_set.all|dictsort:"stop_sequence" %}
+							{% for stop in stop_times %}
+								{% if unique_trips.0.grouper == stop.trip %}
+									{% if times.stop == stop.stop %}
+										<td><small>{{times.arrival_time}} - {{times.trip}} - {{times.stop}}</small></td>
+									{% endif %}
+								{% endif %}
+							{% endfor %}
+						{% endfor %}
+					</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+			</div>
+	</div>-->
 	{% for trip in unique_trips %}
 	<div class="row">
 			<div class="span12">

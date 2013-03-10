@@ -5,12 +5,19 @@
 	<thead>
 	<tr>
 		<th>Bus Routes</th>
+		<th>Direction</th>
 	</tr>
 	</thead>
 	<tbody>
 	{% for route in route_list %}
 		<tr>
-			<td><a href="">{{route.route_id}}</a></td>
+			<td><a href="{% url display_route route.route_shortname %}">{{route.route_id}}</a></td>
+			{% regroup route.trip_set.all|dictsort:"headsign" by headsign as headsigns %}
+			<td>
+			{% for trip in headsigns %}
+				 <a href="{% url display_route route.route_shortname %}?dir={{trip.grouper}}">{{trip.grouper}}</a> /
+			{% endfor %}
+			</td>
 		</tr>
 	{% endfor %}
 	</tbody>

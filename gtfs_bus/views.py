@@ -46,6 +46,7 @@ def display_route(request, pk, dow="Weekday"):
 	busses = Bus.objects.filter(trip__in = trips)
 	stops = Stops.objects.filter(~Q(light_num=0))
 	stop_times = StopTimes.objects.filter(trip__in = trips, stop__in = stops).order_by('trip', 'stop_sequence')
+	stop_times_stop = StopTimes.objects.filter(trip__in = trips, stop__in = stops).order_by('stop', 'trip', 'stop_sequence')
 	try:
 		gmap = maps.Map(opts = {
 			'center': maps.LatLng(busses[0].lat, busses[0].lon),
@@ -82,7 +83,7 @@ def display_route(request, pk, dow="Weekday"):
 			'disableAutoPan': True
 		})
 		info.open(gmap, marker2)
-	context = {'trips': trips, 'stops': stops, 'form': MapForm(initial={'map':gmap}), 'busroute':route, 'stop_times':stop_times}
+	context = {'trips': trips, 'stops': stops, 'form': MapForm(initial={'map':gmap}), 'busroute':route, 'stop_times_stop': stop_times_stop, 'stop_times':stop_times}
 	return render_to_response("gtfs_bus/route_detail.html", context, RequestContext(request))
 
 	
