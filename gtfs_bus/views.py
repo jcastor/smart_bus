@@ -102,6 +102,7 @@ class BusDetail(generics.RetrieveAPIView):
 		serializer = BusSerializer(bus_list)
 		return Response(serializer.data)
 
+
 class ScheduleDetail(generics.RetrieveAPIView):
 	model = StopTimes
 	serializer_class = StopTimesSerializer
@@ -112,12 +113,32 @@ class ScheduleDetail(generics.RetrieveAPIView):
 		serializer = StopTimesSerializer(stop_times)
 		return Response(serializer.data)
 
+class ArrivalsAtStop(generics.RetrieveAPIView):
+	model = StopTimes
+	serializer_class = StopTimesSerializer
+	def get(self, request, stop_id, dow, format=None):
+		our_trips = Trip.objects.filter(day=dow)
+		our_stop = Stops.objects.get(stop_id = stop_id)
+		stop_times = StopTimes.objects.filter(trip__in = our_trips, stop = our_stop).order_by('arrival_time')
+		serializer = StopTimesSerializer(stop_times)
+		return Response(serializer.data)
+
+
+class RouteDetail(generics.RetrieveAPIView):
+	model = Route
+	serializer_class = RouteSerializer
+	def get(self, request, format=None):
+		our_routes = Route.objects.all()
+		serializer = RouteSerializer(our_routes)
+		return Response(serializer.data) 
+
 class NextStopTime(generics.RetrieveAPIView):
 	model = StopTimes
 	serializer_class = StopTimesSerializer
 	def get(self, request, trip_id, stop_id, format=None):
 		our_trip = Trip.objects.get(trip_id=trip_id)
-		stop_times = StopTimes.objects.filter(trip = our_trip)
+		our_stop = Stops.objects.get(stop_id=stop_id)
+		stop_times = StopTimes.objects.filter(trip = our_trip, stop=our_stop)
 		hour = datetime.now().hour
 		next_stop = stop_times[0]
 		minutes = datetime.now().minute
@@ -129,11 +150,10 @@ class NextStopTime(generics.RetrieveAPIView):
 			h_diff = int(split_time[0]) - int(hour)
 			m_diff = int(split_time[1]) - int(minutes)
 			if h_diff > -1 and m_diff > -1:
-				if h_diff < h_curr:
-					if m_diff < m_curr:
-						m_curr = m_diff
-						h_curr = h_diff
-						next_stop = stop
+				if h_diff < h_curr and m_diff < m_curr:
+					m_curr = m_diff
+					h_curr = h_diff
+					next_stop = stop
 		serializer = StopTimesSerializer(next_stop)
 		return Response(serializer.data)
 

@@ -22,3 +22,6 @@ class StopTimesSerializer(serializers.ModelSerializer):
 		trip = TripSerializer()
 		stop = StopsSerializer()
 
+class RouteSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Route
