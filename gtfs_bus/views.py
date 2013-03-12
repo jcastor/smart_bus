@@ -14,6 +14,7 @@ from django_twilio.client import twilio_client
 from rest_framework import generics
 from rest_framework.response import Response
 import math
+from django.db.models import Count
 
 def update_location(request):
 	textmessage = request.GET.get('Body', '')
@@ -46,7 +47,7 @@ def display_route(request, pk, dow="Weekday"):
 	busses = Bus.objects.filter(trip__in = trips)
 	stops = Stops.objects.filter(~Q(light_num=0))
 	stop_times = StopTimes.objects.filter(trip__in = trips, stop__in = stops).order_by('trip', 'stop_sequence')
-	stop_times_stop = StopTimes.objects.filter(trip__in = trips, stop__in = stops).order_by('stop', 'trip', 'stop_sequence')
+	stop_times_stop = StopTimes.objects.filter(trip__in = trips, stop__in = stops, stop_sequence = 1).order_by('arrival_time')
 	try:
 		gmap = maps.Map(opts = {
 			'center': maps.LatLng(busses[0].lat, busses[0].lon),

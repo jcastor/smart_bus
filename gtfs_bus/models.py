@@ -50,6 +50,6 @@ class TripAdmin(admin.ModelAdmin):
 class BusAdmin(admin.ModelAdmin):
 	search_fields = ["phone-num"]
 class StopsAdmin(admin.ModelAdmin):
-	search_fields = ["stop_id"]
+	search_fields = ["stop_name"]
 class StopTimesAdmin(admin.ModelAdmin):
 	search_fields = ["arrival_time"]
