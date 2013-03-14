@@ -5,67 +5,71 @@ from django.views.decorators.cache import cache_page
 from django.db.models import Q
 from gtfs_bus.models import *
 from gtfs_bus.serializers import *
-from django import forms
+import gtfs_bus.helpers as helpers
+from gtfs_bus.forms import MapForm
 from time import time
 from datetime import datetime
 from gmapi import maps
-from gmapi.forms.widgets import GoogleMap
 from django_twilio.client import twilio_client
 from rest_framework import generics
 from rest_framework.response import Response
-import math
 from django.db.models import Count
 
+# View: process_sms
+# This view will process sms messages, either updating a bus location or sending out
+# bus times for a stop
 def process_sms(request):
 	textmessage = request.GET.get('Body', '')
 	sender = request.GET.get('From', '')
-	stop_list = []
 	final_send = ""
-	i = 0
+	i = 0 #initialize counter to only return 3 values
 	#http://499.jason-castor.com/gtfs/update/?From=%2B12502086479&Body=U%3B48.1%3B-123.1
 	if textmessage:
 		if textmessage.startswith("U"): #message should be of the form U;lat;lon
 			split = textmessage.split(';')
 			bus = Bus.objects.get(phone_num = sender)
-			bus.lat = split[1]
+			bus.lat = split[1] 
 			bus.lon = split[2]
-			bus.save()
+			bus.save() #save the bus with the updated coordinates from request
 			return render_to_response("gtfs_bus/success.html", RequestContext(request))
 		else:
-			if sender != "+911":
+			if sender != "+911": #ideally we dont want to be texting messages to 911
 				try:
-					stop = Stops.objects.get(stop_id = textmessage)
-					day = datetime.now().weekday()
+					stop = Stops.objects.get(stop_id = textmessage) #get the stops by the given stop_id
+					day = datetime.now().weekday() #grab the current day of the week
+					#grabbing the trips for the day of the week that is now
 					if day == 6:
 						trips = Trip.objects.filter(day="Sunday")
 					elif day == 5:
 						trips = Trip.objects.filter(day="Saturday")
 					else:
 						trips = Trip.objects.filter(day="Weekday")
-						
+					#grab our stop times based on trips in our day of week and for the stop_id given order by
+					#arrival_time in order to find the next 3 times	
 					stop_times = StopTimes.objects.filter(trip__in = trips,stop=stop).order_by('arrival_time')
 					hour = datetime.now().hour
 					minutes = datetime.now().minute
 					for time in stop_times:
-						split_time = str(time.arrival_time).split(':')
-						if i < 3:
+						split_time = str(time.arrival_time).split(':') #split the time into hours and minutes
+						if i < 3: #check out counter (we only want to return the first 3 results
 							if int(split_time[0]) >= hour:
 								if int(split_time[1]) > minutes:
-									i += 1
+									i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
 									route_name = time.trip.route.route_shortname
 									route_time = time.arrival_time
+									#construct our string we will send in a text message
 									send_string = str(route_name) + " - " + str(route_time) + "\n"
 									final_send += send_string
+					#send our reply
 					twilio_client.sms.messages.create(to=sender, from_="+12509842369", body=final_send)	
 					return render_to_response("gtfs_bus/success.html", RequestContext(request))
 				except:
-					raise
+					#send reply if error happens
 					twilio_client.sms.messages.create(to=sender, from_="+12509842369", body="No Stop Found")	
-					return render_to_response("gtfs_bus/success.html", RequestContext(request))
+					raise
+					return render_to_response("gtfs_bus/default.html", RequestContext(request))
 	
 
-class MapForm(forms.Form):
-	map = forms.Field(widget=GoogleMap(attrs={'width':510, 'height':510}))
 
 def display_route(request, pk, dow="Weekday"):
 	direction = request.GET.get('dir', '')
@@ -119,6 +123,9 @@ def display_route(request, pk, dow="Weekday"):
 
 	
 #API Calls
+
+#BusDetail 
+#Description: gives us a list of busses for the route given
 class BusDetail(generics.RetrieveAPIView):
 	model = Bus
 	serializer_class = BusSerializer
@@ -133,8 +140,8 @@ class BusDetail(generics.RetrieveAPIView):
 				pass
 		serializer = BusSerializer(bus_list)
 		return Response(serializer.data)
-
-
+#ScheduleDetail
+#Description: gives us a list of stop_times given a route and headsign
 class ScheduleDetail(generics.RetrieveAPIView):
 	model = StopTimes
 	serializer_class = StopTimesSerializer
@@ -145,6 +152,8 @@ class ScheduleDetail(generics.RetrieveAPIView):
 		serializer = StopTimesSerializer(stop_times)
 		return Response(serializer.data)
 
+#ArrivalsAtStop
+#Description: gives stop times based on stop_id and day of week given
 class ArrivalsAtStop(generics.RetrieveAPIView):
 	model = StopTimes
 	serializer_class = StopTimesSerializer
@@ -155,7 +164,8 @@ class ArrivalsAtStop(generics.RetrieveAPIView):
 		serializer = StopTimesSerializer(stop_times)
 		return Response(serializer.data)
 
-
+#RouteDetail
+#Description: gives a list of routes
 class RouteDetail(generics.RetrieveAPIView):
 	model = Route
 	serializer_class = RouteSerializer
@@ -189,7 +199,8 @@ class NextStopTime(generics.RetrieveAPIView):
 		serializer = StopTimesSerializer(next_stop)
 		return Response(serializer.data)
 
-
+#LightDetail
+#Description: Gives a list of lights that should be lit up on our microcontroller
 class LightDetail(generics.RetrieveAPIView):
 	model = Stops
 	serializer_class = SimpleStopsSerializer
@@ -205,7 +216,7 @@ class LightDetail(generics.RetrieveAPIView):
 			bus_dict[bus] = 10000
 		for stop in our_stops:
 			for bus in our_bus:
-				distance = distance_on_unit_sphere(stop.lat, stop.lon, bus.lat, bus.lon)
+				distance = helpers.distance_on_unit_sphere(stop.lat, stop.lon, bus.lat, bus.lon)
 				if bus_dict[bus] > distance:
 					bus_dict[bus] = distance
 					stop_dict[bus.id] = stop.id
@@ -213,32 +224,3 @@ class LightDetail(generics.RetrieveAPIView):
 			stops_final += Stops.objects.filter(id = stop_dict[key])
 		serializer = SimpleStopsSerializer(stops_final)
 		return Response(serializer.data)
-			
-			
-
-
-def distance_on_unit_sphere(lat1, long1, lat2, long2):
-	# Convert latitude and longitude to
-	# spherical coordinates in radians.
-	degrees_to_radians = math.pi/180.0
-	# phi = 90 - latitude
-	phi1 = (90.0 - float(lat1))*degrees_to_radians
-	phi2 = (90.0 - float(lat2))*degrees_to_radians
-	# theta = longitude
-	theta1 = float(long1)*degrees_to_radians
-	theta2 = float(long2)*degrees_to_radians
-	# Compute spherical distance from spherical coordinates.
-	# For two locations in spherical coordinates
-	# (1, theta, phi) and (1, theta, phi)
-	# cosine( arc length ) =
-	#    sin phi sin phi' cos(theta-theta') + cos phi cos phi'
-	# distance = rho * arc length
-	cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) + math.cos(phi1)*math.cos(phi2))
-	arc = math.acos( cos )
-	# Remember to multiply arc by the radius of the earth
-	# in your favorite set of units to get length.
-	return arc
-
-
-
-
