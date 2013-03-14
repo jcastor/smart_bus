@@ -16,9 +16,12 @@ from rest_framework.response import Response
 import math
 from django.db.models import Count
 
-def update_location(request):
+def process_sms(request):
 	textmessage = request.GET.get('Body', '')
 	sender = request.GET.get('From', '')
+	stop_list = []
+	final_send = ""
+	i = 0
 	#http://499.jason-castor.com/gtfs/update/?From=%2B12502086479&Body=U%3B48.1%3B-123.1
 	if textmessage:
 		if textmessage.startswith("U"): #message should be of the form U;lat;lon
@@ -30,9 +33,36 @@ def update_location(request):
 			return render_to_response("gtfs_bus/success.html", RequestContext(request))
 		else:
 			if sender != "+911":
-				twilio_client.sms.messages.create(to=sender, from_="+12509842369", body="")	
+				try:
+					stop = Stops.objects.get(stop_id = textmessage)
+					day = datetime.now().weekday()
+					if day == 6:
+						trips = Trip.objects.filter(day="Sunday")
+					elif day == 5:
+						trips = Trip.objects.filter(day="Saturday")
+					else:
+						trips = Trip.objects.filter(day="Weekday")
+						
+					stop_times = StopTimes.objects.filter(trip__in = trips,stop=stop).order_by('arrival_time')
+					hour = datetime.now().hour
+					minutes = datetime.now().minute
+					for time in stop_times:
+						split_time = str(time.arrival_time).split(':')
+						if i < 3:
+							if int(split_time[0]) >= hour:
+								if int(split_time[1]) > minutes:
+									i += 1
+									route_name = time.trip.route.route_shortname
+									route_time = time.arrival_time
+									send_string = str(route_name) + " - " + str(route_time) + "\n"
+									final_send += send_string
+					twilio_client.sms.messages.create(to=sender, from_="+12509842369", body=final_send)	
+					return render_to_response("gtfs_bus/success.html", RequestContext(request))
+				except:
+					raise
+					twilio_client.sms.messages.create(to=sender, from_="+12509842369", body="No Stop Found")	
+					return render_to_response("gtfs_bus/success.html", RequestContext(request))
 	
-	return render_to_response("gtfs_bus/default.html", RequestContext(request))
 
 class MapForm(forms.Form):
 	map = forms.Field(widget=GoogleMap(attrs={'width':510, 'height':510}))
@@ -84,7 +114,7 @@ def display_route(request, pk, dow="Weekday"):
 			'disableAutoPan': True
 		})
 		info.open(gmap, marker2)
-	context = {'trips': trips, 'stops': stops, 'form': MapForm(initial={'map':gmap}), 'busroute':route, 'stop_times_stop': stop_times_stop, 'stop_times':stop_times}
+	context = {'direction': direction, 'dow': dow, 'trips': trips, 'stops': stops, 'form': MapForm(initial={'map':gmap}), 'busroute':route, 'stop_times_stop': stop_times_stop, 'stop_times':stop_times}
 	return render_to_response("gtfs_bus/route_detail.html", context, RequestContext(request))
 
 	
@@ -108,9 +138,9 @@ class BusDetail(generics.RetrieveAPIView):
 class ScheduleDetail(generics.RetrieveAPIView):
 	model = StopTimes
 	serializer_class = StopTimesSerializer
-	def get(self, request, route, format=None):
+	def get(self, request, route, headsign, format=None):
 		our_route = Route.objects.get(route_shortname = route)
-		our_trips = Trip.objects.filter(route=our_route)
+		our_trips = Trip.objects.filter(route=our_route, headsign=headsign)
 		stop_times = StopTimes.objects.filter(trip__in = our_trips).order_by('trip', 'stop_sequence')
 		serializer = StopTimesSerializer(stop_times)
 		return Response(serializer.data)
@@ -162,7 +192,7 @@ class NextStopTime(generics.RetrieveAPIView):
 
 class LightDetail(generics.RetrieveAPIView):
 	model = Stops
-	serializer_class = StopsSerializer
+	serializer_class = SimpleStopsSerializer
 	def get(self, request, route, format=None):
 		stops_final = []
 		our_route = Route.objects.get(route_shortname = route)
@@ -181,7 +211,7 @@ class LightDetail(generics.RetrieveAPIView):
 					stop_dict[bus.id] = stop.id
 		for key in stop_dict:
 			stops_final += Stops.objects.filter(id = stop_dict[key])
-		serializer = StopsSerializer(stops_final)
+		serializer = SimpleStopsSerializer(stops_final)
 		return Response(serializer.data)
 			
 			

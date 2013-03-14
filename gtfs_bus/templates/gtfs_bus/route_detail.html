@@ -5,7 +5,28 @@
 {% regroup busroute.busstop_set.all by direction as direction_list %}
 <div class="container">
 	<div class="row">
-		<div class="span6"><strong>Direction: </strong>{% for direction in direction_list %}<a href="{% url displayroute_direction busroute.id direction.grouper%}"> {{direction.grouper}} </a>/ {%endfor%}
+		<div class="span6">
+			<ul class="nav nav-pills">
+				{% if dow == "Weekday" %}
+					<li class="active">
+						<a href="{% url display_route_dow busroute.route_shortname dow %}?dir={{direction}}">{{dow}}</a>
+					</li>
+					<li><a href="{% url display_route_dow busroute.route_shortname "Saturday" %}?dir={{direction}}">Saturday</a></li>
+					<li><a href="{% url display_route_dow busroute.route_shortname "Sunday" %}?dir={{direction}}">Sunday</a></li>
+				{% elif dow == "Sunday" %}
+					<li><a href="{% url display_route_dow busroute.route_shortname "Weekday" %}?dir={{direction}}">Weekday</a></li>
+					<li><a href="{% url display_route_dow busroute.route_shortname "Saturday" %}?dir={{direction}}">Saturday</a></li>
+					<li class="active">
+						<a href="{% url display_route_dow busroute.route_shortname dow %}?dir={{direction}}">{{dow}}</a>
+					</li>
+				{% elif dow == "Saturday" %}	
+					<li><a href="{% url display_route_dow busroute.route_shortname "Weekday" %}?dir={{direction}}">Weekday</a></li>
+					<li class="active">
+						<a href="{% url display_route_dow busroute.route_shortname dow %}?dir={{direction}}">{{dow}}</a>
+					</li>
+					<li><a href="{% url display_route_dow busroute.route_shortname "Sunday" %}?dir={{direction}}">Sunday</a></li>
+				{% endif %}
+			</ul>
 		</div>
 		
 	</div>

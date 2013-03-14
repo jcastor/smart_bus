@@ -15,6 +15,11 @@ class StopsSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Stops
 
+class SimpleStopsSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Stops
+		fields = ('stop_id', 'light_num')
+
 class StopTimesSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = StopTimes
