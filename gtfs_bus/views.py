@@ -52,7 +52,7 @@ def process_sms(request):
 					for time in stop_times:
 						split_time = str(time.arrival_time).split(':') #split the time into hours and minutes
 						if i < 3: #check out counter (we only want to return the first 3 results
-							if int(split_time[0]) >= hour:
+							if int(split_time[0]) == hour:
 								if int(split_time[1]) > minutes:
 									i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
 									route_name = time.trip.route.route_shortname
@@ -60,6 +60,13 @@ def process_sms(request):
 									#construct our string we will send in a text message
 									send_string = str(route_name) + " - " + str(route_time) + "\n"
 									final_send += send_string
+							elif int(split_time[0]) > hour:
+								i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
+								route_name = time.trip.route.route_shortname
+								route_time = time.arrival_time
+								#construct our string we will send in a text message
+								send_string = str(route_name) + " - " + str(route_time) + "\n"
+								final_send += send_string
 					#send our reply
 					twilio_client.sms.messages.create(to=sender, from_="+12509842369", body=final_send)	
 					return render_to_response("gtfs_bus/success.html", RequestContext(request))

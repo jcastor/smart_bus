@@ -59,4 +59,4 @@ for row in cr2:
 		time.save()
 	except Exception as e:
 		print e
-print "Finished loading stop_times"
+print "Finished loading stop_times " + sys.argv[1]
