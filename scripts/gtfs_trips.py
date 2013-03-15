@@ -16,18 +16,19 @@ cr2 = csv.reader(data2)
 
 
 for row in cr2:
-	route = Route.objects.get(route_id="26-Victoria")
-	route_id = row[0]
 	try:
-		if route_id == "26-Victoria":
-			new_trip = row[2]
-			trip = Trip()
-			trip.trip_id = new_trip
-			trip.route = route
-			day = row[1].split('-')
-			day2 = day[2]
-			trip.day = day2
-			trip.headsign = row[4]
-			trip.save()
-	except exception as e:
+		route_id = row[0]
+		route = Route.objects.get(route_id=route_id)
+		new_trip = row[2]
+		trip = Trip()
+		trip.trip_id = new_trip
+		trip.route = route
+		day = row[1].split('-')
+		day2 = day[2]
+		trip.day = day2
+		trip.headsign = row[4]
+		trip.save()
+	except Exception as e:
 		print e
+		print route_id
+print "Finished loading trips"

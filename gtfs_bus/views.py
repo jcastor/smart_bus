@@ -73,13 +73,13 @@ def process_sms(request):
 
 def display_route(request, pk, dow="Weekday"):
 	direction = request.GET.get('dir', '')
-	route = Route.objects.get(route_shortname=pk)
+	route = Route.objects.get(id=pk)
 	if direction:
 		trips = Trip.objects.filter(route=route, day=dow, headsign = direction)
 	else:
 		trips = Trip.objects.filter(route=route, day=dow)
 	busses = Bus.objects.filter(trip__in = trips)
-	stops = Stops.objects.filter(~Q(light_num=0))
+	stops = Stops.objects.filter(~Q(light_num=0), stoptimes__trip__in = trips)
 	stop_times = StopTimes.objects.filter(trip__in = trips, stop__in = stops).order_by('trip', 'stop_sequence')
 	stop_times_stop = StopTimes.objects.filter(trip__in = trips, stop__in = stops, stop_sequence = 1).order_by('arrival_time')
 	try:
@@ -93,7 +93,7 @@ def display_route(request, pk, dow="Weekday"):
 		})
 	except:
 		gmap = maps.Map(opts = {
-			'center': maps.LatLng(stops[0].lat, stops[0].lon),
+			'center': maps.LatLng(48.4633,-123.311800),
 			'mapTypeId': maps.MapTypeId.ROADMAP,
 			'zoom': 13,
 			'mapTypeControlOptions': {
@@ -131,7 +131,7 @@ class BusDetail(generics.RetrieveAPIView):
 	serializer_class = BusSerializer
 	def get(self, request, route, format=None):
 		bus_list = []
-		our_route = Route.objects.get(route_shortname = route)
+		our_route = Route.objects.get(route_id = route)
 		our_trips = Trip.objects.filter(route = our_route)
 		for trips in our_trips:
 			try:
@@ -146,7 +146,7 @@ class ScheduleDetail(generics.RetrieveAPIView):
 	model = StopTimes
 	serializer_class = StopTimesSerializer
 	def get(self, request, route, headsign, format=None):
-		our_route = Route.objects.get(route_shortname = route)
+		our_route = Route.objects.get(route_id = route)
 		our_trips = Trip.objects.filter(route=our_route, headsign=headsign)
 		stop_times = StopTimes.objects.filter(trip__in = our_trips).order_by('trip', 'stop_sequence')
 		serializer = StopTimesSerializer(stop_times)
@@ -206,10 +206,10 @@ class LightDetail(generics.RetrieveAPIView):
 	serializer_class = SimpleStopsSerializer
 	def get(self, request, route, format=None):
 		stops_final = []
-		our_route = Route.objects.get(route_shortname = route)
+		our_route = Route.objects.get(route_id = route)
 		our_trips = Trip.objects.filter(route=our_route)
 		our_bus = Bus.objects.filter(trip__in = our_trips)
-		our_stops = Stops.objects.filter(~Q(light_num=0))
+		our_stops = Stops.objects.filter(~Q(light_num=0), stoptimes__trip__in = our_trips)
 		stop_dict = {}
 		bus_dict = {}
 		for bus in our_bus:

@@ -24,3 +24,4 @@ for row in cr2:
 	stop.lon = row[4]
 	stop.light_num = 0
 	stop.save()
+print "Finished Loading Stops"

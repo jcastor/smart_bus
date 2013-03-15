@@ -1,0 +1,10 @@
+python gtfs_stop_times.py transit_data/xaa
+python gtfs_stop_times.py transit_data/xab
+python gtfs_stop_times.py transit_data/xac
+python gtfs_stop_times.py transit_data/xad
+python gtfs_stop_times.py transit_data/xae
+python gtfs_stop_times.py transit_data/xaf
+python gtfs_stop_times.py transit_data/xag
+python gtfs_stop_times.py transit_data/xah
+python gtfs_stop_times.py transit_data/xai
+python gtfs_stop_times.py transit_data/xaj
