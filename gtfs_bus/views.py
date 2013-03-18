@@ -9,6 +9,7 @@ import gtfs_bus.helpers as helpers
 from gtfs_bus.forms import MapForm
 from time import time
 from datetime import datetime
+from datetime import date
 from gmapi import maps
 from django_twilio.client import twilio_client
 from rest_framework import generics
@@ -20,6 +21,11 @@ from django.db.models import Count
 # bus times for a stop
 def process_sms(request):
 	textmessage = request.GET.get('Body', '')
+	calendars = Calendar.objects.all()
+	our_calendars = []
+	for calendar in calendars:
+		if calendar.start_date < date.today() and calendar.end_date > date.today():
+			our_calendars += Calendar.objects.filter(service_id = calendar.service_id)
 	sender = request.GET.get('From', '')
 	final_send = ""
 	i = 0 #initialize counter to only return 3 values
@@ -39,11 +45,11 @@ def process_sms(request):
 					day = datetime.now().weekday() #grab the current day of the week
 					#grabbing the trips for the day of the week that is now
 					if day == 6:
-						trips = Trip.objects.filter(day="Sunday")
+						trips = Trip.objects.filter(day="Sunday", service_id__in = our_calendars)
 					elif day == 5:
-						trips = Trip.objects.filter(day="Saturday")
+						trips = Trip.objects.filter(day="Saturday", service_id__in = our_calendars)
 					else:
-						trips = Trip.objects.filter(day="Weekday")
+						trips = Trip.objects.filter(day="Weekday", service_id__in = our_calendars)
 					#grab our stop times based on trips in our day of week and for the stop_id given order by
 					#arrival_time in order to find the next 3 times	
 					stop_times = StopTimes.objects.filter(trip__in = trips,stop=stop).order_by('arrival_time')
@@ -81,14 +87,19 @@ def process_sms(request):
 def display_route(request, pk, dow="Weekday"):
 	direction = request.GET.get('dir', '')
 	route = Route.objects.get(id=pk)
+	calendars = Calendar.objects.all()
+	our_calendars = []
+	for calendar in calendars:
+		if calendar.start_date < date.today() and calendar.end_date > date.today():
+			our_calendars += Calendar.objects.filter(service_id = calendar.service_id)
 	if direction:
-		trips = Trip.objects.filter(route=route, day=dow, headsign = direction)
+		trips = Trip.objects.filter(route=route, day=dow, headsign = direction, service_id__in = our_calendars)
 	else:
-		trips = Trip.objects.filter(route=route, day=dow)
+		trips = Trip.objects.filter(route=route, day=dow, service_id__in = our_calendars)
 	busses = Bus.objects.filter(trip__in = trips)
 	stops = Stops.objects.filter(~Q(light_num=0), stoptimes__trip__in = trips)
 	stop_times = StopTimes.objects.filter(trip__in = trips, stop__in = stops).order_by('trip', 'stop_sequence')
-	stop_times_stop = StopTimes.objects.filter(trip__in = trips, stop__in = stops, stop_sequence = 1).order_by('arrival_time')
+	stop_times_stop = StopTimes.objects.filter(trip__in = trips, stop__in = stops, stop_sequence = 1).order_by('display_time')
 	try:
 		gmap = maps.Map(opts = {
 			'center': maps.LatLng(busses[0].lat, busses[0].lon),
@@ -153,8 +164,13 @@ class ScheduleDetail(generics.RetrieveAPIView):
 	model = StopTimes
 	serializer_class = StopTimesSerializer
 	def get(self, request, route, headsign, format=None):
+		calendars = Calendar.objects.all()
+		our_calendars = []
+		for calendar in calendars:
+			if calendar.start_date < date.today() and calendar.end_date > date.today():
+				our_calendars += Calendar.objects.filter(service_id = calendar.service_id)
 		our_route = Route.objects.get(route_id = route)
-		our_trips = Trip.objects.filter(route=our_route, headsign=headsign)
+		our_trips = Trip.objects.filter(route=our_route, headsign=headsign, service_id__in = our_calendars)
 		stop_times = StopTimes.objects.filter(trip__in = our_trips).order_by('trip', 'stop_sequence')
 		serializer = StopTimesSerializer(stop_times)
 		return Response(serializer.data)
@@ -165,7 +181,12 @@ class ArrivalsAtStop(generics.RetrieveAPIView):
 	model = StopTimes
 	serializer_class = StopTimesSerializer
 	def get(self, request, stop_id, dow, format=None):
-		our_trips = Trip.objects.filter(day=dow)
+		calendars = Calendar.objects.all()
+		our_calendars = []
+		for calendar in calendars:
+			if calendar.start_date < date.today() and calendar.end_date > date.today():
+				our_calendars += Calendar.objects.filter(service_id = calendar.service_id)
+		our_trips = Trip.objects.filter(day=dow, service_id__in = our_calendars)
 		our_stop = Stops.objects.get(stop_id = stop_id)
 		stop_times = StopTimes.objects.filter(trip__in = our_trips, stop = our_stop).order_by('arrival_time')
 		serializer = StopTimesSerializer(stop_times)
@@ -185,7 +206,12 @@ class NextStopTime(generics.RetrieveAPIView):
 	model = StopTimes
 	serializer_class = StopTimesSerializer
 	def get(self, request, trip_id, stop_id, format=None):
-		our_trip = Trip.objects.get(trip_id=trip_id)
+		calendars = Calendar.objects.all()
+		our_calendars = []
+		for calendar in calendars:
+			if calendar.start_date < date.today() and calendar.end_date > date.today():
+				our_calendars += Calendar.objects.filter(service_id = calendar.service_id)
+		our_trip = Trip.objects.get(trip_id=trip_id, service_id__in = our_calendars)
 		our_stop = Stops.objects.get(stop_id=stop_id)
 		stop_times = StopTimes.objects.filter(trip = our_trip, stop=our_stop)
 		hour = datetime.now().hour
@@ -212,9 +238,14 @@ class LightDetail(generics.RetrieveAPIView):
 	model = Stops
 	serializer_class = SimpleStopsSerializer
 	def get(self, request, route, format=None):
+		calendars = Calendar.objects.all()
+		our_calendars = []
+		for calendar in calendars:
+			if calendar.start_date < date.today() and calendar.end_date > date.today():
+				our_calendars += Calendar.objects.filter(service_id = calendar.service_id)
 		stops_final = []
 		our_route = Route.objects.get(route_id = route)
-		our_trips = Trip.objects.filter(route=our_route)
+		our_trips = Trip.objects.filter(route=our_route, service_id__in = our_calendars)
 		our_bus = Bus.objects.filter(trip__in = our_trips)
 		our_stops = Stops.objects.filter(~Q(light_num=0), stoptimes__trip__in = our_trips)
 		stop_dict = {}

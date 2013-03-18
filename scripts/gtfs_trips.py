@@ -18,11 +18,14 @@ cr2 = csv.reader(data2)
 for row in cr2:
 	try:
 		route_id = row[0]
+		service_id = row[1]
+		calendar = Calendar.objects.get(service_id=service_id)
 		route = Route.objects.get(route_id=route_id)
 		new_trip = row[2]
 		trip = Trip()
 		trip.trip_id = new_trip
 		trip.route = route
+		trip.service_id = calendar
 		day = row[1].split('-')
 		day2 = day[2]
 		trip.day = day2
@@ -31,4 +34,6 @@ for row in cr2:
 	except Exception as e:
 		print e
 		print route_id
+		sys.exit("There was an error loading trips, please look at the error above\
+				to troubleshoot")
 print "Finished loading trips"

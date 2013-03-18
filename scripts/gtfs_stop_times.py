@@ -22,41 +22,28 @@ for row in cr2:
 		time.trip = trip
 		time.stop = stop
 		time_arrive = row[1]
-		time.stop_sequence = row[4]
-		if time_arrive.startswith("24"):
-			time_arrive = list(time_arrive)
-			time_arrive[0] = '0'
-			time_arrive[1] = '0'
-			time_arrive = "".join(time_arrive)
-		if time_arrive.startswith("25"):
-			time_arrive = list(time_arrive)
-			time_arrive[0] = '0'
-			time_arrive[1] = '1'
-			time_arrive = "".join(time_arrive)
-		if time_arrive.startswith("26"):
-			time_arrive = list(time_arrive)
-			time_arrive[0] = '0'
-			time_arrive[1] = '2'
-			time_arrive = "".join(time_arrive)
-		time.arrival_time = time_arrive
 		time_depart = row[2]
-		if time_depart.startswith("25"):
-			time_depart = list(time_depart)
-			time_depart[0] = '0'
-			time_depart[1] = '1'
-			time_depart = "".join(time_depart)
-		if time_depart.startswith("24"):
-			time_depart = list(time_depart)
-			time_depart[0] = '0'
-			time_depart[1] = '0'
-			time_depart = "".join(time_depart)
-		if time_depart.startswith("26"):
-			time_depart = list(time_depart)
-			time_depart[0] = '0'
-			time_depart[1] = '2'
-			time_depart = "".join(time_depart)
+		time.arrival_time = time_arrive
+		time.departure_time = time_depart
+		time.stop_sequence = row[4]
+		time_display = time_arrive.split(':')
+		if int(time_display[0]) >= 24:
+			time_display[0] = int(time_display[0]) - 24
+			if time_display > 10:		
+				time_display[0] = str(time_display[0])
+				time_display = ":".join(time_display)
+			else:
+				number = str(time_display[0])
+				time_display[0] = '0'
+				time_display[0] + number
+				time_display = ":".join(time_display)
+		else:
+			time_display = ":".join(time_display)
+		time.display_time = time_display
 		time.departure_time = time_depart
 		time.save()
 	except Exception as e:
 		print e
+		sys.exit("There was an error loading the stop_times.txt file \
+				Please read the above error to troubleshoot")
 print "Finished loading stop_times " + sys.argv[1]

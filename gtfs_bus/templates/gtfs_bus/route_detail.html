@@ -1,7 +1,7 @@
 {% extends "gtfs_bus/base.html" %}
 
 {% block content %}
-<h3>BusRoute - {{busroute.route_shortname}}</h3>
+<h3>BusRoute - {{busroute.id}}</h3>
 {% regroup busroute.busstop_set.all by direction as direction_list %}
 <div class="container">
 	<div class="row">
@@ -9,22 +9,22 @@
 			<ul class="nav nav-pills">
 				{% if dow == "Weekday" %}
 					<li class="active">
-						<a href="{% url display_route_dow busroute.route_shortname dow %}?dir={{direction}}">{{dow}}</a>
+						<a href="{% url display_route_dow busroute.id dow %}?dir={{direction}}">{{dow}}</a>
 					</li>
-					<li><a href="{% url display_route_dow busroute.route_shortname "Saturday" %}?dir={{direction}}">Saturday</a></li>
-					<li><a href="{% url display_route_dow busroute.route_shortname "Sunday" %}?dir={{direction}}">Sunday</a></li>
+					<li><a href="{% url display_route_dow busroute.id "Saturday" %}?dir={{direction}}">Saturday</a></li>
+					<li><a href="{% url display_route_dow busroute.id "Sunday" %}?dir={{direction}}">Sunday</a></li>
 				{% elif dow == "Sunday" %}
-					<li><a href="{% url display_route_dow busroute.route_shortname "Weekday" %}?dir={{direction}}">Weekday</a></li>
-					<li><a href="{% url display_route_dow busroute.route_shortname "Saturday" %}?dir={{direction}}">Saturday</a></li>
+					<li><a href="{% url display_route_dow busroute.id "Weekday" %}?dir={{direction}}">Weekday</a></li>
+					<li><a href="{% url display_route_dow busroute.id "Saturday" %}?dir={{direction}}">Saturday</a></li>
 					<li class="active">
-						<a href="{% url display_route_dow busroute.route_shortname dow %}?dir={{direction}}">{{dow}}</a>
+						<a href="{% url display_route_dow busroute.id dow %}?dir={{direction}}">{{dow}}</a>
 					</li>
 				{% elif dow == "Saturday" %}	
-					<li><a href="{% url display_route_dow busroute.route_shortname "Weekday" %}?dir={{direction}}">Weekday</a></li>
+					<li><a href="{% url display_route_dow busroute.id "Weekday" %}?dir={{direction}}">Weekday</a></li>
 					<li class="active">
-						<a href="{% url display_route_dow busroute.route_shortname dow %}?dir={{direction}}">{{dow}}</a>
+						<a href="{% url display_route_dow busroute.id dow %}?dir={{direction}}">{{dow}}</a>
 					</li>
-					<li><a href="{% url display_route_dow busroute.route_shortname "Sunday" %}?dir={{direction}}">Sunday</a></li>
+					<li><a href="{% url display_route_dow busroute.id "Sunday" %}?dir={{direction}}">Sunday</a></li>
 				{% endif %}
 			</ul>
 		</div>
@@ -54,7 +54,7 @@
 						<td><small>{{trip.trip}}</small> </td>
 						{% for times in stop_times %}
 							{% if trip.trip == times.trip %}
-								<td><small>{{times.arrival_time}}</small></td>
+								<td><small>{{times.display_time}}</small></td>
 							{% endif %}
 						{% endfor %}
 					</tr>
