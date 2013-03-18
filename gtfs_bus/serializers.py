@@ -6,21 +6,22 @@ class RouteSerializer(serializers.ModelSerializer):
 		model = Route
 
 class TripSerializer(serializers.ModelSerializer):
+	route = RouteSerializer()
 	class Meta:
 		model = Trip
-		depth = 4
-		route = RouteSerializer()
-		fields = ('id', 'trip_id', 'day', 'headsign')
+		exclude = ('id',)
+		fields = ('trip_id', 'day', 'headsign')
 
 class BusSerializer(serializers.ModelSerializer):
+	trip = TripSerializer()
 	class Meta:
 		model = Bus
 		depth = 2
-		trip = TripSerializer()
 
 class StopsSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Stops
+		exclude = ('id',)
 
 class SimpleStopsSerializer(serializers.ModelSerializer):
 	class Meta:
@@ -28,9 +29,8 @@ class SimpleStopsSerializer(serializers.ModelSerializer):
 		fields = ('stop_id', 'light_num')
 
 class StopTimesSerializer(serializers.ModelSerializer):
+	trip = TripSerializer()
+	stop = StopsSerializer()
 	class Meta:
 		model = StopTimes
-		depth = 4
-		trip = TripSerializer()
-		stop = StopsSerializer()
 
