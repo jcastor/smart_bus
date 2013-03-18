@@ -1,3 +1,6 @@
+# Copyright Jason Castor, 2013
+
+
 from django.db import models
 from django.contrib import admin
 

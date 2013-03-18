@@ -1,3 +1,7 @@
+# Copyright Jason Castor, 2013
+# <license>
+#
+
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.generic import ListView, DetailView, TemplateView
