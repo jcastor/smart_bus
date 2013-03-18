@@ -188,7 +188,7 @@ class ArrivalsAtStop(generics.RetrieveAPIView):
 				our_calendars += Calendar.objects.filter(service_id = calendar.service_id)
 		our_trips = Trip.objects.filter(day=dow, service_id__in = our_calendars)
 		our_stop = Stops.objects.get(stop_id = stop_id)
-		stop_times = StopTimes.objects.filter(trip__in = our_trips, stop = our_stop).order_by('arrival_time')
+		stop_times = StopTimes.objects.filter(trip__in = our_trips, stop = our_stop).order_by('display_time')
 		serializer = StopTimesSerializer(stop_times)
 		return Response(serializer.data)
 
