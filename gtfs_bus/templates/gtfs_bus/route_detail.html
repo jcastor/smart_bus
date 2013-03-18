@@ -1,7 +1,7 @@
 {% extends "gtfs_bus/base.html" %}
 
 {% block content %}
-<h3>BusRoute - {{busroute.id}}</h3>
+<h3>BusRoute - {{busroute.route_id}}</h3>
 {% regroup busroute.busstop_set.all by direction as direction_list %}
 <div class="container">
 	<div class="row">

@@ -52,24 +52,24 @@ def process_sms(request):
 						trips = Trip.objects.filter(day="Weekday", service_id__in = our_calendars)
 					#grab our stop times based on trips in our day of week and for the stop_id given order by
 					#arrival_time in order to find the next 3 times	
-					stop_times = StopTimes.objects.filter(trip__in = trips,stop=stop).order_by('arrival_time')
+					stop_times = StopTimes.objects.filter(trip__in = trips,stop=stop).order_by('display_time')
 					hour = datetime.now().hour
 					minutes = datetime.now().minute
 					for time in stop_times:
-						split_time = str(time.arrival_time).split(':') #split the time into hours and minutes
+						split_time = str(time.display_time).split(':') #split the time into hours and minutes
 						if i < 3: #check out counter (we only want to return the first 3 results
 							if int(split_time[0]) == hour:
 								if int(split_time[1]) > minutes:
 									i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
 									route_name = time.trip.route.route_shortname
-									route_time = time.arrival_time
+									route_time = time.display_time
 									#construct our string we will send in a text message
 									send_string = str(route_name) + " - " + str(route_time) + "\n"
 									final_send += send_string
 							elif int(split_time[0]) > hour:
 								i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
 								route_name = time.trip.route.route_shortname
-								route_time = time.arrival_time
+								route_time = time.display_time
 								#construct our string we will send in a text message
 								send_string = str(route_name) + " - " + str(route_time) + "\n"
 								final_send += send_string

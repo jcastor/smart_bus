@@ -1,10 +1,17 @@
 from rest_framework import serializers
 from gtfs_bus.models import *
 
+class RouteSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Route
+
 class TripSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Trip
+		depth = 4
+		route = RouteSerializer()
 		fields = ('id', 'trip_id', 'day', 'headsign')
+
 class BusSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Bus
@@ -23,10 +30,7 @@ class SimpleStopsSerializer(serializers.ModelSerializer):
 class StopTimesSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = StopTimes
-		depth = 2
+		depth = 4
 		trip = TripSerializer()
 		stop = StopsSerializer()
 
-class RouteSerializer(serializers.ModelSerializer):
-	class Meta:
-		model = Route
