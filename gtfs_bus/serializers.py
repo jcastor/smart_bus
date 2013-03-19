@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from gtfs_bus.models import *
 
+
 class RouteSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Route
@@ -10,7 +11,7 @@ class TripSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Trip
 		exclude = ('id',)
-		fields = ('trip_id', 'day', 'headsign')
+		fields = ('route','trip_id', 'day', 'headsign')
 
 class BusSerializer(serializers.ModelSerializer):
 	trip = TripSerializer()

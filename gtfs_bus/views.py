@@ -266,3 +266,43 @@ class LightDetail(generics.RetrieveAPIView):
 			stops_final += Stops.objects.filter(id = stop_dict[key])
 		serializer = SimpleStopsSerializer(stops_final)
 		return Response(serializer.data)
+
+
+class UpcomingStopTimes(generics.RetrieveAPIView):
+	model = StopTimes
+	serializer_class = StopTimesSerializer
+	def get(self, request, stop_id, num_times, format=None):
+		calendars = Calendar.objects.all()
+		our_calendars = []
+		our_stops = []
+		i = 0
+		for calendar in calendars:
+			if calendar.start_date < date.today() and calendar.end_date > date.today():
+				our_calendars += Calendar.objects.filter(service_id = calendar.service_id)
+		stop = Stops.objects.get(stop_id = stop_id) #get the stops by the given stop_id
+		day = datetime.now().weekday() #grab the current day of the week
+		#grabbing the trips for the day of the week that is now
+		if day == 6:
+			trips = Trip.objects.filter(day="Sunday", service_id__in = our_calendars)
+		elif day == 5:
+			trips = Trip.objects.filter(day="Saturday", service_id__in = our_calendars)
+		else:
+			trips = Trip.objects.filter(day="Weekday", service_id__in = our_calendars)
+			#grab our stop times based on trips in our day of week and for the stop_id given order by
+			#arrival_time in order to find the next 3 times	
+			stop_times = StopTimes.objects.filter(trip__in = trips,stop=stop).order_by('display_time')
+			hour = datetime.now().hour
+			minutes = datetime.now().minute
+			for time in stop_times:
+				split_time = str(time.display_time).split(':') #split the time into hours and minutes
+				if i < int(num_times): #check out counter (we only want to return the first 3 results
+					if int(split_time[0]) == hour:
+						if int(split_time[1]) > minutes:
+							i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
+									#construct our string we will send in a text message
+							our_stops += StopTimes.objects.filter(id = time.id)
+						elif int(split_time[0]) > hour:
+							i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
+							our_stops += StopTimes.objects.filter(id = time.id)
+		serializer = StopTimesSerializer(our_stops)
+		return Response(serializer.data)
