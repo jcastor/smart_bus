@@ -6,12 +6,24 @@ class RouteSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Route
 
+class SimpleRouteSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Route
+		fields = ('route_shortname',)
+
 class TripSerializer(serializers.ModelSerializer):
 	route = RouteSerializer()
 	class Meta:
 		model = Trip
 		exclude = ('id',)
 		fields = ('route','trip_id', 'day', 'headsign')
+
+class SimpleTripSerializer(serializers.ModelSerializer):
+	route = SimpleRouteSerializer()
+	class Meta:
+		model = Trip
+		exclude = ('id',)
+		fields = ('route',)
 
 class BusSerializer(serializers.ModelSerializer):
 	trip = TripSerializer()
@@ -35,3 +47,9 @@ class StopTimesSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = StopTimes
 
+class SimpleStopTimesSerializer(serializers.ModelSerializer):
+	trip = SimpleTripSerializer()
+	class Meta:
+		depth = 2
+		model = StopTimes
+		fields = ('display_time', 'trip')

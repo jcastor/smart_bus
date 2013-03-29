@@ -10,6 +10,7 @@
 	</thead>
 	<tbody>
 	{% for route in route_list %}
+		{% if route.route_id == '26-Victoria' %}
 		<tr>
 			<td><a href="{% url display_route route.id %}">{{route.route_id}}</a></td>
 			{% regroup route.trip_set.all|dictsort:"headsign" by headsign as headsigns %}
@@ -21,6 +22,7 @@
 			</ul>
 			</td>
 		</tr>
+		{% endif %}
 	{% endfor %}
 	</tbody>
 </table>

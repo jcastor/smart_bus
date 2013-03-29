@@ -1,7 +1,6 @@
 # Copyright Jason Castor, 2013
 # <license>
 #
-
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.generic import ListView, DetailView, TemplateView
@@ -56,27 +55,29 @@ def process_sms(request):
 						trips = Trip.objects.filter(day="Weekday", service_id__in = our_calendars)
 					#grab our stop times based on trips in our day of week and for the stop_id given order by
 					#arrival_time in order to find the next 3 times	
-					stop_times = StopTimes.objects.filter(trip__in = trips,stop=stop).order_by('display_time')
+					stop_times = StopTimes.objects.filter(trip__in = trips,stop=stop).order_by('arrival_time')
 					hour = datetime.now().hour
 					minutes = datetime.now().minute
 					for time in stop_times:
-						split_time = str(time.display_time).split(':') #split the time into hours and minutes
-						if i < 3: #check out counter (we only want to return the first 3 results
-							if int(split_time[0]) == hour:
-								if int(split_time[1]) > minutes:
+						check_stop_sequence = time.stop_sequence + 1
+						if StopTimes.objects.filter(trip = time.trip, stop_sequence = check_stop_sequence).exists():
+							split_time = str(time.arrival_time).split(':') #split the time into hours and minutes
+							if i < 3: #check out counter (we only want to return the first 3 results
+								if int(split_time[0]) == hour:
+									if int(split_time[1]) > minutes:
+										i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
+										route_name = time.trip.route.route_shortname
+										route_time = time.display_time
+										#construct our string we will send in a text message
+										send_string = str(route_name) + " - " + str(route_time) + "\n"
+										final_send += send_string
+								elif int(split_time[0]) > hour:
 									i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
 									route_name = time.trip.route.route_shortname
 									route_time = time.display_time
 									#construct our string we will send in a text message
 									send_string = str(route_name) + " - " + str(route_time) + "\n"
 									final_send += send_string
-							elif int(split_time[0]) > hour:
-								i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
-								route_name = time.trip.route.route_shortname
-								route_time = time.display_time
-								#construct our string we will send in a text message
-								send_string = str(route_name) + " - " + str(route_time) + "\n"
-								final_send += send_string
 					#send our reply
 					twilio_client.sms.messages.create(to=sender, from_="+12509842369", body=final_send)	
 					return render_to_response("gtfs_bus/success.html", RequestContext(request))
@@ -86,7 +87,6 @@ def process_sms(request):
 					raise
 					return render_to_response("gtfs_bus/default.html", RequestContext(request))
 	
-
 
 def display_route(request, pk, dow="Weekday"):
 	direction = request.GET.get('dir', '')
@@ -103,7 +103,7 @@ def display_route(request, pk, dow="Weekday"):
 	busses = Bus.objects.filter(trip__in = trips)
 	stops = Stops.objects.filter(~Q(light_num=0), stoptimes__trip__in = trips)
 	stop_times = StopTimes.objects.filter(trip__in = trips, stop__in = stops).order_by('trip', 'stop_sequence')
-	stop_times_stop = StopTimes.objects.filter(trip__in = trips, stop__in = stops, stop_sequence = 1).order_by('display_time')
+	stop_times_stop = StopTimes.objects.filter(trip__in = trips, stop__in = stops, stop_sequence = 1).order_by('arrival_time')
 	try:
 		gmap = maps.Map(opts = {
 			'center': maps.LatLng(busses[0].lat, busses[0].lon),
@@ -123,14 +123,16 @@ def display_route(request, pk, dow="Weekday"):
 			},
 		})
 		
-	for stoptime in stop_times:
+	for stop in stops:
 		marker = maps.Marker(opts = {
 			'map': gmap,
-			'position': maps.LatLng(stoptime.stop.lat, stoptime.stop.lon),
+			'icon': 'http://499.jason-castor.com/static/mapicons/busstop.png',
+			'position': maps.LatLng(stop.lat, stop.lon),
 		})
 	for bus in busses:
 		marker2 = maps.Marker(opts = {
 			'map': gmap,
+			'icon': 'http://499.jason-castor.com/static/mapicons/bus.png',
 			'position': maps.LatLng(bus.lat, bus.lon),
 		})
 		maps.event.addListener(marker2, 'mouseover', 'myobj.markerOver')
@@ -192,7 +194,7 @@ class ArrivalsAtStop(generics.RetrieveAPIView):
 				our_calendars += Calendar.objects.filter(service_id = calendar.service_id)
 		our_trips = Trip.objects.filter(day=dow, service_id__in = our_calendars)
 		our_stop = Stops.objects.get(stop_id = stop_id)
-		stop_times = StopTimes.objects.filter(trip__in = our_trips, stop = our_stop).order_by('display_time')
+		stop_times = StopTimes.objects.filter(trip__in = our_trips, stop = our_stop).order_by('arrival_time')
 		serializer = StopTimesSerializer(stop_times)
 		return Response(serializer.data)
 
@@ -270,7 +272,7 @@ class LightDetail(generics.RetrieveAPIView):
 
 class UpcomingStopTimes(generics.RetrieveAPIView):
 	model = StopTimes
-	serializer_class = StopTimesSerializer
+	serializer_class = SimpleStopTimesSerializer
 	def get(self, request, stop_id, num_times, format=None):
 		calendars = Calendar.objects.all()
 		our_calendars = []
@@ -288,21 +290,22 @@ class UpcomingStopTimes(generics.RetrieveAPIView):
 			trips = Trip.objects.filter(day="Saturday", service_id__in = our_calendars)
 		else:
 			trips = Trip.objects.filter(day="Weekday", service_id__in = our_calendars)
-			#grab our stop times based on trips in our day of week and for the stop_id given order by
-			#arrival_time in order to find the next 3 times	
-			stop_times = StopTimes.objects.filter(trip__in = trips,stop=stop).order_by('display_time')
-			hour = datetime.now().hour
-			minutes = datetime.now().minute
-			for time in stop_times:
-				split_time = str(time.display_time).split(':') #split the time into hours and minutes
+		#grab our stop times based on trips in our day of week and for the stop_id given order by
+		#arrival_time in order to find the next 3 times	
+		stop_times = StopTimes.objects.filter(trip__in = trips,stop=stop).order_by('arrival_time')
+		hour = datetime.now().hour
+		minutes = datetime.now().minute
+		for time in stop_times:
+			check_stop_sequence = time.stop_sequence + 1
+			if StopTimes.objects.filter(trip = time.trip, stop_sequence = check_stop_sequence).exists():
+				split_time = str(time.arrival_time).split(':') #split the time into hours and minutes
 				if i < int(num_times): #check out counter (we only want to return the first 3 results
 					if int(split_time[0]) == hour:
 						if int(split_time[1]) > minutes:
 							i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
-									#construct our string we will send in a text message
 							our_stops += StopTimes.objects.filter(id = time.id)
-						elif int(split_time[0]) > hour:
-							i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
-							our_stops += StopTimes.objects.filter(id = time.id)
-		serializer = StopTimesSerializer(our_stops)
+					elif int(split_time[0]) > hour:
+						i += 1 #if the hour is the same or greater and the minutes are greater we have a valid next stop time
+						our_stops += StopTimes.objects.filter(id = time.id)
+		serializer = SimpleStopTimesSerializer(our_stops)
 		return Response(serializer.data)

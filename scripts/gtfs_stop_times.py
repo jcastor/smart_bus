@@ -21,24 +21,17 @@ for row in cr2:
 		time = StopTimes()
 		time.trip = trip
 		time.stop = stop
-		time_arrive = row[1]
-		time_depart = row[2]
+		time_arrive = row[1].zfill(8)
+		time_depart = row[2].zfill(8)
 		time.arrival_time = time_arrive
 		time.departure_time = time_depart
 		time.stop_sequence = row[4]
 		time_display = time_arrive.split(':')
 		if int(time_display[0]) >= 24:
 			time_display[0] = int(time_display[0]) - 24
-			if time_display > 10:		
-				time_display[0] = str(time_display[0])
-				time_display = ":".join(time_display)
-			else:
-				number = str(time_display[0])
-				time_display[0] = '0'
-				time_display[0] + number
-				time_display = ":".join(time_display)
-		else:
-			time_display = ":".join(time_display)
+			time_display[0] = str(time_display[0])
+		time_display = ":".join(time_display)
+		time_display = time_display.zfill(8)
 		time.display_time = time_display
 		time.departure_time = time_depart
 		time.save()
