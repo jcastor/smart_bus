@@ -1,3 +1,9 @@
+# File: serializer.py
+# Description: Model serializers for django-rest framework
+# serializers with Simple prefix are for api's that are called
+# by embedded devices that may not have enough memory for
+# complete model
+
 from rest_framework import serializers
 from gtfs_bus.models import *
 

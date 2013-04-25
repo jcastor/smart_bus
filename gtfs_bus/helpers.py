@@ -1,6 +1,7 @@
 import math
 
-
+#function taken from: http://www.johndcook.com/python_longitude_latitude.html
+#Public domain licensed, no strings attatched for this function
 def distance_on_unit_sphere(lat1, long1, lat2, long2):
 	# Convert latitude and longitude to
 	# spherical coordinates in radians.

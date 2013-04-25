@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from django.db.models import Count
 
 # View: process_sms
-# This view will process sms messages, either updating a bus location or sending out
+# Description: This view will process sms messages, either updating a bus location or sending out
 # bus times for a stop
 def process_sms(request):
 	textmessage = request.GET.get('Body', '')
@@ -87,15 +87,19 @@ def process_sms(request):
 					raise
 					return render_to_response("gtfs_bus/default.html", RequestContext(request))
 	
-
+# View: display_route
+# Description: displays the route information on a page, including a map of timing stops and bus locations
+#
 def display_route(request, pk, dow="Weekday"):
-	direction = request.GET.get('dir', '')
+	direction = request.GET.get('dir', '') #get the direction we are going for the route
 	route = Route.objects.get(id=pk)
 	calendars = Calendar.objects.all()
 	our_calendars = []
+	#populate a list of calendars that correspond to the service_id's of bus trips that are running today
 	for calendar in calendars:
 		if calendar.start_date < date.today() and calendar.end_date > date.today():
 			our_calendars += Calendar.objects.filter(service_id = calendar.service_id)
+	#grab trips corresponding to the direction we have selected, or in all directions if none
 	if direction:
 		trips = Trip.objects.filter(route=route, day=dow, headsign = direction, service_id__in = our_calendars)
 	else:
@@ -104,6 +108,7 @@ def display_route(request, pk, dow="Weekday"):
 	stops = Stops.objects.filter(~Q(light_num=0), stoptimes__trip__in = trips)
 	stop_times = StopTimes.objects.filter(trip__in = trips, stop__in = stops).order_by('trip', 'stop_sequence')
 	stop_times_stop = StopTimes.objects.filter(trip__in = trips, stop__in = stops, stop_sequence = 1).order_by('arrival_time')
+	#set the map focus to the first bus we have, or to a default location if no busses are running
 	try:
 		gmap = maps.Map(opts = {
 			'center': maps.LatLng(busses[0].lat, busses[0].lon),
@@ -122,13 +127,14 @@ def display_route(request, pk, dow="Weekday"):
 				'style': maps.MapTypeControlStyle.DROPDOWN_MENU
 			},
 		})
-		
+	#mark all the stops on the map	
 	for stop in stops:
 		marker = maps.Marker(opts = {
 			'map': gmap,
 			'icon': 'http://499.jason-castor.com/static/mapicons/busstop.png',
 			'position': maps.LatLng(stop.lat, stop.lon),
 		})
+	#mark all the busses on the map with mouseovers stating their trips
 	for bus in busses:
 		marker2 = maps.Marker(opts = {
 			'map': gmap,
@@ -207,7 +213,8 @@ class RouteDetail(generics.RetrieveAPIView):
 		our_routes = Route.objects.all()
 		serializer = RouteSerializer(our_routes)
 		return Response(serializer.data) 
-
+#NextStopTime
+#Description: give the next stop time at a given stop_id and trip_id
 class NextStopTime(generics.RetrieveAPIView):
 	model = StopTimes
 	serializer_class = StopTimesSerializer
@@ -268,8 +275,8 @@ class LightDetail(generics.RetrieveAPIView):
 			stops_final += Stops.objects.filter(id = stop_dict[key])
 		serializer = SimpleStopsSerializer(stops_final)
 		return Response(serializer.data)
-
-
+#UpcomingStopTimes
+#Description: given a stop and x number of times to return, give the next x busses arriving at that stop
 class UpcomingStopTimes(generics.RetrieveAPIView):
 	model = StopTimes
 	serializer_class = SimpleStopTimesSerializer
